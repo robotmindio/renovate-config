@@ -1,0 +1,104 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": "Shared Renovate preset for robotmindio repos",
+
+  "extends": [
+    "config:recommended",
+    ":separateMajorReleases",
+    ":enableVulnerabilityAlerts"
+  ],
+
+  "timezone": "America/Mexico_City",
+
+  "schedule": ["before 9am on monday"],
+
+  "prHourlyLimit": 3,
+  "prConcurrentLimit": 5,
+
+  "labels": ["dependencies"],
+
+  "commitMessagePrefix": "fix(deps):",
+  "commitMessageAction": "update",
+  "semanticCommits": "enabled",
+
+  "vulnerabilityAlerts": {
+    "labels": ["dependencies", "security"],
+    "schedule": ["at any time"],
+    "automerge": false
+  },
+
+  "packageRules": [
+    {
+      "description": "Group all non-major updates into a single PR per repo",
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "groupName": "all non-major dependencies",
+      "groupSlug": "all-non-major"
+    },
+    {
+      "description": "Patch updates require review (enable auto-merge per-repo once CI is gated)",
+      "matchUpdateTypes": ["patch", "pin", "digest"],
+      "automerge": false
+    },
+    {
+      "description": "Major updates get individual PRs for careful review",
+      "matchUpdateTypes": ["major"],
+      "automerge": false,
+      "groupName": null
+    },
+    {
+      "description": "Pin GitHub Actions to SHA for supply chain security",
+      "matchManagers": ["github-actions"],
+      "pinDigests": true
+    },
+    {
+      "description": "Group all GitHub Actions updates together",
+      "matchManagers": ["github-actions"],
+      "groupName": "github actions",
+      "groupSlug": "github-actions"
+    },
+    {
+      "description": "Pin Docker digests for reproducible builds",
+      "matchManagers": ["dockerfile"],
+      "pinDigests": true
+    },
+    {
+      "description": "Group Docker base image updates",
+      "matchManagers": ["dockerfile"],
+      "groupName": "docker base images",
+      "groupSlug": "docker-images"
+    },
+    {
+      "description": "Do not touch Node.js major version — managed manually",
+      "matchPackageNames": ["node"],
+      "matchManagers": ["dockerfile"],
+      "matchUpdateTypes": ["major"],
+      "enabled": false
+    },
+    {
+      "description": "Do not touch Python major version — managed manually",
+      "matchPackageNames": ["python"],
+      "matchManagers": ["dockerfile"],
+      "matchUpdateTypes": ["major"],
+      "enabled": false
+    },
+    {
+      "description": "Stability window — wait 3 days before proposing updates",
+      "matchUpdateTypes": ["minor", "patch"],
+      "minimumReleaseAge": "3 days"
+    },
+    {
+      "description": "Wider stability window for major updates",
+      "matchUpdateTypes": ["major"],
+      "minimumReleaseAge": "7 days"
+    }
+  ],
+
+  "ignoreDeps": [],
+
+  "postUpdateOptions": ["goModTidy", "pnpmDedupe"],
+
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": ["before 9am on the first day of the month"]
+  }
+}
