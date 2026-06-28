@@ -1,6 +1,6 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "description": "Shared Renovate preset for robotmindio repos",
+  "description": "Shared Renovate preset for robotmindio repos. Extended by external repos (flights, realestate). NOTE: the robotmind monorepo no longer uses this preset — it has its own root renovate.json (separate scopes by design). Keep this in sync with the monorepo's hardened rules when they change.",
 
   "extends": [
     "config:recommended",
@@ -35,15 +35,8 @@
       "groupSlug": "all-non-major"
     },
     {
-      "description": "Patch updates require review (enable auto-merge per-repo once CI is gated)",
-      "matchUpdateTypes": ["patch", "pin", "digest"],
-      "automerge": false
-    },
-    {
       "description": "Major updates get individual PRs for careful review",
-      "matchUpdateTypes": ["major"],
-      "automerge": false,
-      "groupName": null
+      "matchUpdateTypes": ["major"]
     },
     {
       "description": "Pin GitHub Actions to SHA for supply chain security",
@@ -66,6 +59,25 @@
       "matchManagers": ["dockerfile"],
       "groupName": "docker base images",
       "groupSlug": "docker-images"
+    },
+    {
+      "description": "Ignore our own ghcr.io/robotmindio/* images — they are built by each repo's CI and rolled by argocd-image-updater, not Renovate. Renovate cannot auth to the private registry anyway ('Error obtaining docker token' / no-result lookups), so this silences that noise and prevents Renovate from ever fighting image-updater on our own tags.",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["ghcr.io/robotmindio/**"],
+      "enabled": false
+    },
+    {
+      "description": "Group all @opentelemetry/* packages — partial bumps cascade peer-dep conflicts. sdk-node 0.218 pins sdk-metrics/resources 2.x; mixing with 1.30.x installs both side-by-side and tsc fails on Resource type drift.",
+      "matchPackageNames": ["@opentelemetry/**"],
+      "groupName": "opentelemetry-js",
+      "groupSlug": "opentelemetry-js"
+    },
+    {
+      "description": "Group all Python opentelemetry-* packages — same lockstep rationale as the JS cohort. instrumentation-* packages depend on a matching minor of the base opentelemetry-instrumentation; floating bumps let pip drift the base above what the instrumentation cohort expects.",
+      "matchPackageNames": ["opentelemetry-**"],
+      "matchManagers": ["pip_requirements", "pep621", "poetry", "pipenv"],
+      "groupName": "opentelemetry-python",
+      "groupSlug": "opentelemetry-python"
     },
     {
       "description": "Do not touch Node.js major version — managed manually",
